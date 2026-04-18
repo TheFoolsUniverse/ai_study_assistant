@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AI Study Assistant</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', sans-serif; background: #0a0f1e; color: #e2e8f0; min-height: 100vh; padding: 40px 20px; }
+.container { max-width: 960px; margin: 0 auto; }
+
+header { text-align: center; margin-bottom: 40px; }
+header h1 { font-size: 2.4rem; font-weight: 800; color: #a78bfa; letter-spacing: -1px; }
+header p  { color: #64748b; margin-top: 8px; }
+
+/* Input card */
+.input-card { background: #131929; border: 1px solid #1e293b; border-radius: 16px; padding: 32px; margin-bottom: 32px; }
+.input-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+.itab { padding: 8px 20px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; background: #1e293b; color: #64748b; border: 1px solid #334155; transition: all 0.2s; }
+.itab.active { background: #a78bfa; color: #0a0f1e; border-color: #a78bfa; font-weight: 700; }
+
+textarea { width: 100%; height: 180px; background: #0a0f1e; border: 1px solid #334155; border-radius: 10px; color: #e2e8f0; font-size: 0.95rem; padding: 14px; resize: vertical; outline: none; font-family: inherit; }
+textarea:focus { border-color: #a78bfa; }
+
+.drop-zone { border: 2px dashed #334155; border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; transition: border-color 0.2s; display: none; }
+.drop-zone:hover { border-color: #a78bfa; }
+.drop-zone .icon { font-size: 2.5rem; margin-bottom: 12px; }
+.drop-zone p { color: #64748b; }
+.drop-zone .hint { font-size: 0.8rem; margin-top: 6px; color: #475569; }
+#pdf-file { display: none; }
+.file-chosen { color: #a78bfa; margin-top: 10px; font-size: 0.85rem; display: none; }
+
+.btn-generate { width: 100%; padding: 14px; margin-top: 20px; background: linear-gradient(135deg, #7c3aed, #a78bfa); color: white; font-size: 1rem; font-weight: 700; border: none; border-radius: 10px; cursor: pointer; transition: opacity 0.2s; }
+.btn-generate:hover { opacity: 0.88; }
+.btn-generate:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Feature tabs */
+.feature-tabs { display: flex; gap: 4px; margin-bottom: 24px; flex-wrap: wrap; }
+.ftab { padding: 10px 20px; border-radius: 10px; cursor: pointer; font-size: 0.88rem; background: #131929; color: #64748b; border: 1px solid #1e293b; transition: all 0.2s; }
+.ftab.active { background: #1e1040; color: #a78bfa; border-color: #a78bfa; font-weight: 600; }
+.ftab .badge { display: inline-block; background: #a78bfa; color: #0a0f1e; border-radius: 99px; font-size: 0.7rem; padding: 1px 7px; margin-left: 6px; font-weight: 700; }
+
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* Summary */
+.summary-title { font-size: 1.5rem; font-weight: 700; color: #a78bfa; margin-bottom: 12px; }
+.overview { color: #94a3b8; font-size: 0.95rem; line-height: 1.7; margin-bottom: 20px; }
+.key-points { list-style: none; }
+.key-points li { padding: 10px 14px; background: #131929; border-left: 3px solid #a78bfa; border-radius: 0 8px 8px 0; margin-bottom: 8px; color: #cbd5e1; font-size: 0.93rem; }
+
+/* Flashcards */
+.flashcards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media(max-width:600px){ .flashcards-grid { grid-template-columns: 1fr; } }
+.flashcard { perspective: 1000px; height: 160px; cursor: pointer; }
+.flashcard-inner { position: relative; width: 100%; height: 100%; transition: transform 0.5s; transform-style: preserve-3d; }
+.flashcard.flipped .flashcard-inner { transform: rotateY(180deg); }
+.flashcard-front, .flashcard-back {
+  position: absolute; width: 100%; height: 100%; backface-visibility: hidden;
+  border-radius: 12px; padding: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;
+}
+.flashcard-front { background: #131929; border: 1px solid #334155; color: #e2e8f0; font-weight: 600; font-size: 0.95rem; }
+.flashcard-back  { background: #1e1040; border: 1px solid #a78bfa; color: #c4b5fd; transform: rotateY(180deg); font-size: 0.9rem; }
+.flashcard-front::after { content: "tap to flip"; position: absolute; bottom: 10px; font-size: 0.7rem; color: #475569; }
+
+/* Quiz */
+.quiz-question { background: #131929; border: 1px solid #1e293b; border-radius: 12px; padding: 24px; margin-bottom: 16px; }
+.quiz-question .qtext { font-weight: 600; color: #e2e8f0; margin-bottom: 14px; font-size: 0.95rem; }
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-option { padding: 10px 16px; background: #0a0f1e; border: 1px solid #334155; border-radius: 8px; cursor: pointer; font-size: 0.9rem; color: #94a3b8; transition: all 0.2s; text-align: left; }
+.quiz-option:hover:not(:disabled) { border-color: #a78bfa; color: #e2e8f0; }
+.quiz-option.correct  { background: #052e16; border-color: #16a34a; color: #86efac; }
+.quiz-option.wrong    { background: #2d0a0a; border-color: #dc2626; color: #fca5a5; }
+.quiz-option:disabled { cursor: default; }
+.explanation { margin-top: 12px; font-size: 0.83rem; color: #64748b; padding: 8px 12px; background: #0f172a; border-radius: 6px; display: none; }
+.quiz-score { text-align: center; padding: 24px; background: #131929; border-radius: 12px; margin-top: 20px; display: none; }
+.quiz-score .score-val { font-size: 3rem; font-weight: 800; color: #a78bfa; }
+.quiz-score p { color: #64748b; margin-top: 6px; }
+.btn-retry { padding: 10px 28px; background: #a78bfa; color: #0a0f1e; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; margin-top: 16px; }
+
+/* Mind map */
+#mindmap-container { width: 100%; padding: 8px; }
+.mm-center {
+  text-align: center; font-size: 1.3rem; font-weight: 800;
+  color: #a78bfa; background: #1e1040; border: 2px solid #a78bfa;
+  border-radius: 14px; padding: 16px 24px; margin: 0 auto 32px;
+  max-width: 320px;
+}
+.mm-branches { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media(max-width:600px){ .mm-branches { grid-template-columns: 1fr; } }
+.mm-branch-block { background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #1e293b; }
+.mm-branch-label {
+  font-size: 0.95rem; font-weight: 700; border-left: 4px solid;
+  padding: 8px 12px; border-radius: 6px; margin-bottom: 12px;
+  background: #131929;
+}
+.mm-children { display: flex; flex-direction: column; gap: 8px; }
+.mm-child {
+  font-size: 0.85rem; color: #94a3b8; padding: 7px 12px;
+  background: #1e293b; border-radius: 6px; border-left: 2px solid #334155;
+}
+
+/* Loading */
+.loading-overlay { position: fixed; inset: 0; background: rgba(10,15,30,0.85); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 999; }
+.loading-overlay.show { display: flex; }
+.spinner { width: 50px; height: 50px; border: 4px solid #1e293b; border-top-color: #a78bfa; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 20px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { color: #94a3b8; font-size: 1rem; }
+.loading-steps { margin-top: 16px; display: flex; flex-direction: column; gap: 6px; }
+.loading-step { font-size: 0.83rem; color: #475569; transition: color 0.3s; }
+.loading-step.done { color: #a78bfa; }
+
+.results-section { display: none; }
+.results-section.show { display: block; }
+.error-msg { color: #f87171; font-size: 0.85rem; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🎓 AI Study Assistant</h1>
+    <p>Upload a PDF or paste your notes — get summaries, flashcards, quizzes & mind maps instantly</p>
+  </header>
+
+  <!-- INPUT -->
+  <div class="input-card">
+    <div class="input-tabs">
+      <div class="itab active" onclick="switchInput('text')">✏️ Paste Text</div>
+      <div class="itab" onclick="switchInput('pdf')">📄 Upload PDF</div>
+    </div>
+
+    <textarea id="text-input" placeholder="Paste your lecture notes, textbook excerpt, or any study material here..."></textarea>
+
+    <div class="drop-zone" id="drop-zone" onclick="document.getElementById('pdf-file').click()">
+      <div class="icon">📑</div>
+      <p><strong>Click to upload a PDF</strong></p>
+      <p class="hint">Lecture notes, textbook chapters, study guides</p>
+      <div class="file-chosen" id="file-chosen"></div>
+    </div>
+    <input type="file" id="pdf-file" accept=".pdf" onchange="handlePDF(this)"/>
+
+    <div class="error-msg" id="input-error"></div>
+    <button class="btn-generate" onclick="generate()">✨ Generate Study Materials</button>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="results-section" id="results">
+    <div class="feature-tabs">
+      <div class="ftab active" onclick="switchFeature('summary')">📋 Summary</div>
+      <div class="ftab" onclick="switchFeature('flashcards')">🃏 Flashcards <span class="badge" id="fc-count">0</span></div>
+      <div class="ftab" onclick="switchFeature('quiz')">❓ Quiz <span class="badge" id="quiz-count">0</span></div>
+      <div class="ftab" onclick="switchFeature('mindmap')">🗺️ Mind Map</div>
+    </div>
+
+    <!-- Summary -->
+    <div class="panel active" id="panel-summary">
+      <div class="summary-title" id="sum-title"></div>
+      <div class="overview" id="sum-overview"></div>
+      <ul class="key-points" id="sum-keypoints"></ul>
+    </div>
+
+    <!-- Flashcards -->
+    <div class="panel" id="panel-flashcards">
+      <div class="flashcards-grid" id="flashcards-grid"></div>
+    </div>
+
+    <!-- Quiz -->
+    <div class="panel" id="panel-quiz">
+      <div id="quiz-container"></div>
+      <div class="quiz-score" id="quiz-score">
+        <div class="score-val" id="score-val"></div>
+        <p id="score-msg"></p>
+        <button class="btn-retry" onclick="retryQuiz()">🔄 Retry Quiz</button>
+      </div>
+    </div>
+
+    <!-- Mind Map -->
+    <div class="panel" id="panel-mindmap">
+      <div id="mindmap-container"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading overlay -->
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text">Analyzing your content with AI...</div>
+  <div class="loading-steps">
+    <div class="loading-step" id="step-1">⏳ Generating summary...</div>
+    <div class="loading-step" id="step-2">⏳ Creating flashcards...</div>
+    <div class="loading-step" id="step-3">⏳ Building quiz questions...</div>
+    <div class="loading-step" id="step-4">⏳ Mapping mind map...</div>
+  </div>
+</div>
+
+<script>
+let inputMode = 'text';
+let pdfBase64 = null;
+let quizData = [];
+let quizAnswered = 0;
+let quizCorrect = 0;
+
+function switchInput(mode) {
+  inputMode = mode;
+  document.querySelectorAll('.itab').forEach((t,i) => t.classList.toggle('active', (i===0&&mode==='text')||(i===1&&mode==='pdf')));
+  document.getElementById('text-input').style.display = mode==='text' ? 'block' : 'none';
+  document.getElementById('drop-zone').style.display  = mode==='pdf'  ? 'block' : 'none';
+}
+
+function switchFeature(feat) {
+  document.querySelectorAll('.ftab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  document.getElementById('panel-'+feat).classList.add('active');
+  if (feat === 'mindmap') drawMindMap();
+}
+
+function handlePDF(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    pdfBase64 = e.target.result.split(',')[1];
+    const el = document.getElementById('file-chosen');
+    el.textContent = '✅ ' + file.name;
+    el.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+function stepDone(n) {
+  const el = document.getElementById('step-'+n);
+  el.textContent = el.textContent.replace('⏳','✅');
+  el.classList.add('done');
+}
+
+async function generate() {
+  const err = document.getElementById('input-error');
+  err.textContent = '';
+
+  const text = document.getElementById('text-input').value.trim();
+  if (inputMode==='text' && !text) { err.textContent='⚠️ Please paste some text first.'; return; }
+  if (inputMode==='pdf' && !pdfBase64) { err.textContent='⚠️ Please upload a PDF first.'; return; }
+
+  // Reset steps
+  for(let i=1;i<=4;i++){
+    const el=document.getElementById('step-'+i);
+    el.textContent=el.textContent.replace('✅','⏳').replace('done','');
+    el.classList.remove('done');
+  }
+
+  document.getElementById('loading').classList.add('show');
+  document.getElementById('results').classList.remove('show');
+
+  try {
+    const payload = inputMode==='text' ? {text} : {pdf: pdfBase64};
+
+    const sumRes  = await fetch('/api/summary',    {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    stepDone(1);
+    const fcRes   = await fetch('/api/flashcards', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    stepDone(2);
+    const quizRes = await fetch('/api/quiz',       {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    stepDone(3);
+    const mmRes   = await fetch('/api/mindmap',    {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    stepDone(4);
+
+    const [sum, fc, quiz, mm] = await Promise.all([sumRes.json(), fcRes.json(), quizRes.json(), mmRes.json()]);
+
+    renderSummary(sum);
+    renderFlashcards(fc);
+    renderQuiz(quiz);
+    window._mindmapData = mm;
+
+    document.getElementById('loading').classList.remove('show');
+    document.getElementById('results').classList.add('show');
+
+    // reset to summary tab
+    document.querySelectorAll('.ftab')[0].click();
+
+  } catch(e) {
+    document.getElementById('loading').classList.remove('show');
+    err.textContent = '⚠️ Error: ' + e.message;
+  }
+}
+
+function renderSummary(data) {
+  document.getElementById('sum-title').textContent = data.title || 'Summary';
+  document.getElementById('sum-overview').textContent = data.overview || '';
+  const ul = document.getElementById('sum-keypoints');
+  ul.innerHTML = '';
+  (data.key_points||[]).forEach(p => { const li=document.createElement('li'); li.textContent=p; ul.appendChild(li); });
+}
+
+function renderFlashcards(cards) {
+  document.getElementById('fc-count').textContent = cards.length;
+  const grid = document.getElementById('flashcards-grid');
+  grid.innerHTML = '';
+  cards.forEach(c => {
+    grid.innerHTML += `<div class="flashcard" onclick="this.classList.toggle('flipped')">
+      <div class="flashcard-inner">
+        <div class="flashcard-front">${c.front}</div>
+        <div class="flashcard-back">${c.back}</div>
+      </div>
+    </div>`;
+  });
+}
+
+function renderQuiz(questions) {
+  quizData = questions;
+  quizAnswered = 0; quizCorrect = 0;
+  document.getElementById('quiz-count').textContent = questions.length;
+  document.getElementById('quiz-score').style.display = 'none';
+  const container = document.getElementById('quiz-container');
+  container.innerHTML = '';
+  questions.forEach((q, qi) => {
+    const opts = q.options.map((o,oi) => `<button class="quiz-option" onclick="answerQuiz(${qi},${oi},this,'${q.answer.replace(/'/g,"\\'")}')"> ${o}</button>`).join('');
+    container.innerHTML += `<div class="quiz-question" id="qq-${qi}">
+      <div class="qtext">${qi+1}. ${q.question}</div>
+      <div class="quiz-options" id="opts-${qi}">${opts}</div>
+      <div class="explanation" id="exp-${qi}">${q.explanation}</div>
+    </div>`;
+  });
+}
+
+function answerQuiz(qi, oi, btn, correct) {
+  const opts = document.querySelectorAll(`#opts-${qi} button`);
+  opts.forEach(b => { b.disabled=true; if(b.textContent.trim()===correct.trim()) b.classList.add('correct'); });
+  const chosen = btn.textContent.trim();
+  if (chosen !== correct.trim()) btn.classList.add('wrong'); else quizCorrect++;
+  document.getElementById('exp-'+qi).style.display = 'block';
+  quizAnswered++;
+  if (quizAnswered === quizData.length) {
+    const pct = Math.round(quizCorrect/quizData.length*100);
+    document.getElementById('score-val').textContent = pct+'%';
+    document.getElementById('score-msg').textContent = `${quizCorrect} of ${quizData.length} correct — ${pct>=80?'Great job! 🎉':pct>=50?'Good effort! Keep studying 📖':'Keep practicing! 💪'}`;
+    document.getElementById('quiz-score').style.display = 'block';
+  }
+}
+
+function retryQuiz() { renderQuiz(quizData); }
+
+// ── Mind Map (div-based, scrollable, readable) ──
+function drawMindMap() {
+  const data = window._mindmapData;
+  if (!data || !data.center) return;
+  const container = document.getElementById('mindmap-container');
+  const branches = data.branches || [];
+  const colors = ['#7c3aed','#0e7490','#065f46','#92400e','#831843','#1e3a8a'];
+
+  let html = `<div class="mm-center">${data.center}</div><div class="mm-branches">`;
+  branches.forEach((branch, bi) => {
+    const color = colors[bi % colors.length];
+    const children = branch.children || [];
+    html += `
+      <div class="mm-branch-block">
+        <div class="mm-branch-label" style="border-color:${color};color:${color}">${branch.label}</div>
+        <div class="mm-children">
+          ${children.map(c => `<div class="mm-child">${c}</div>`).join('')}
+        </div>
+      </div>`;
+  });
+  html += `</div>`;
+  container.innerHTML = html;
+}
+</script>
+</body>
+</html>
