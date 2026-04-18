@@ -1,32 +1,35 @@
 # 🎓 AI Study Assistant
+🚀 **[Live Demo](https://ai-study-assistant-k8vt.onrender.com)**
 
-An AI-powered web app that transforms lecture notes or PDFs into study materials instantly.
+> **Note on Performance:** This application is hosted on Render's free tier. If the site has been inactive, it may take **30-50 seconds** to "wake up" (cold start) while the server provisions resources. Once active, it will respond instantly.
 
-## What It Does
+An AI-powered web application that transforms complex lecture notes and university PDFs into structured study materials instantly. This tool utilizes Large Language Models to automate the creation of summaries, interactive flashcards, and quizzes.
 
-Upload a PDF or paste your notes → get:
+## ✨ Key Features
+
+Upload a PDF or paste your notes to generate:
 
 | Feature | Description |
-|---------|-------------|
-| 📋 Summary | Title, overview, and key bullet points |
-| 🃏 Flashcards | 6 interactive flip cards (tap to reveal answer) |
-| ❓ Quiz | 5 MCQs with instant feedback and score |
-| 🗺️ Mind Map | Visual canvas showing topic structure |
+|:---|:---|
+| 📋 **Summary** | Generates a topic title, concise overview, and 5 key bullet points. |
+| 🃏 **Flashcards** | Creates 6 interactive flip cards with questions on the front and answers on the back. |
+| ❓ **Quiz** | Build a 5-question multiple-choice quiz with instant feedback and scoring. |
+| 🗺️ **Mind Map** | Renders a visual canvas showing the main topic and its supporting branches. |
 
-## Tech Stack
+## 🛠️ Tech Stack
 
-- **Python** — Core language
-- **Flask** — Web server & REST API
-- **OpenRouter API** — LLM for content generation
-- **PyPDF2** — PDF text extraction
-- **HTML/CSS/JS** — Frontend (single file, no frameworks)
-- **Canvas API** — Mind map rendering
+- **Python (Flask)** — Backend web server and REST API logic
+- **OpenRouter API** — LLM integration for intelligent content generation
+- **PyPDF2** — Robust text extraction from uploaded PDF documents
+- **HTML5/CSS3/JS** — Responsive, modern frontend interface
+- **Canvas API** — Dynamic rendering of the interactive mind map
 
-## Project Structure
+## 📂 Project Structure
 
-```
+```text
 ai_study_assistant/
-├── app.py            ← main file (run this)
-├── requirements.txt
-├── .env              ← your API key
-└── README.md
+├── app.py            # Main application logic & AI prompt engineering
+├── requirements.txt  # Python dependencies (Flask, OpenAI, PyPDF2, etc.)
+├── templates/        # UI directory
+│   └── index.html    # Single-page dashboard interface
+└── README.md         # Project documentation

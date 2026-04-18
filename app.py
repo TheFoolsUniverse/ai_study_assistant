@@ -1,3 +1,15 @@
+"""
+AI Study Assistant
+===================
+Upload a PDF or paste text → get:
+  1. Summary
+  2. Flashcards
+  3. Quiz (MCQ)
+  4. Mind Map outline
+
+Tech: Python, Flask, OpenRouter API, PyPDF2
+"""
+
 import os
 import json
 import io
@@ -11,7 +23,7 @@ load_dotenv()
 app = Flask(__name__)
 
 client = OpenAI(
-    api_key=os.getenv("OPENROUTER_API_KEY", "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"),
+    api_key=os.getenv("OPENROUTER_API_KEY", "your-key-here"),
     base_url="https://openrouter.ai/api/v1"
 )
 MODEL = "openrouter/auto"
@@ -122,6 +134,12 @@ def extract_pdf_text(file_bytes):
         return text.strip()
     except Exception as e:
         return f"ERROR: {e}"
+
+
+# ─────────────────────────────────────────────
+# HTML
+# ─────────────────────────────────────────────
+
 
 
 # ─────────────────────────────────────────────
