@@ -1,5 +1,5 @@
 # 🎓 AI Study Assistant
-🚀 **[Live Demo](https://ai-study-assistant-k8vt.onrender.com)**
+🚀 **[Live Demo](https://ai-study-assistant-g4ar.onrender.com)**
 
 > **Note on Performance:** This application is hosted on Render's free tier. If the site has been inactive, it may take **30-50 seconds** to "wake up" (cold start) while the server provisions resources. Once active, it will respond instantly.
 
