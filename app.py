@@ -1,15 +1,3 @@
-"""
-AI Study Assistant
-===================
-Upload a PDF or paste text → get:
-  1. Summary
-  2. Flashcards
-  3. Quiz (MCQ)
-  4. Mind Map outline
-
-Tech: Python, Flask, OpenRouter API, PyPDF2
-"""
-
 import os
 import json
 import io
